@@ -137,13 +137,15 @@ export function useGame() {
   
   // 获取总攻击力
   function getTotalAttack() {
+    if (!player || !player.equipment) return player?.attack || 20
+    
     const equipStats = getEquipmentStats(player.equipment)
     const prestigeInfo = getPrestigeInfo(player.prestigeLevel)
-    const baseAttack = player.attack
+    const baseAttack = player.attack || 20
     
-    let total = baseAttack + equipStats.attack + prestigeInfo.attack
+    let total = baseAttack + (equipStats?.attack || 0) + (prestigeInfo?.attack || 0)
     
-    if (player.skills.berserk.active) {
+    if (player.skills?.berserk?.active) {
       total = Math.floor(total * 1.5)
     }
     
@@ -156,17 +158,19 @@ export function useGame() {
   
   // 获取总防御力
   function getTotalDefense() {
+    if (!player || !player.equipment) return player?.defense || 10
+    
     const equipStats = getEquipmentStats(player.equipment)
     const prestigeInfo = getPrestigeInfo(player.prestigeLevel)
-    const baseDefense = player.defense
+    const baseDefense = player.defense || 10
     
-    let total = baseDefense + equipStats.defense + prestigeInfo.defense
+    let total = baseDefense + (equipStats?.defense || 0) + (prestigeInfo?.defense || 0)
     
-    if (player.skills.berserk.active) {
+    if (player.skills?.berserk?.active) {
       total = Math.floor(total * 0.7)
     }
     
-    if (player.skills.iron_body.active) {
+    if (player.skills?.iron_body?.active) {
       total = Math.floor(total * 1.5)
     }
     

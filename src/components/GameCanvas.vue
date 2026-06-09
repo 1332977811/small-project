@@ -4,6 +4,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { getAsset } from '../composables/assetLoader'
 
 const props = defineProps({
   currentMap: Array,
@@ -57,16 +58,54 @@ function drawMap() {
         continue
       }
       
+      // 尝试使用素材图片
+      let tileImage = null
       switch (props.currentMap[y][x]) {
         case props.TERRAIN.GRASS:
-          drawGrassTile(screenX, screenY, x, y)
+          tileImage = getAsset('grass')
           break
         case props.TERRAIN.ROAD:
-          drawRoadTile(screenX, screenY, x, y)
+          tileImage = getAsset('road')
           break
         case props.TERRAIN.BUILDING:
-          drawBuildingTile(screenX, screenY)
+          tileImage = getAsset('building')
           break
+        case props.TERRAIN.FOREST:
+          tileImage = getAsset('forest')
+          break
+        case props.TERRAIN.MOUNTAIN:
+          tileImage = getAsset('mountain')
+          break
+        case props.TERRAIN.RIVER:
+          tileImage = getAsset('river')
+          break
+        case props.TERRAIN.BRIDGE:
+          tileImage = getAsset('bridge')
+          break
+        case props.TERRAIN.STRONGHOLD:
+          tileImage = getAsset('stronghold')
+          break
+      }
+      
+      if (tileImage) {
+        // 使用素材图片
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(tileImage, screenX, screenY, TILE_SIZE, TILE_SIZE)
+      } else {
+        // 回退到 Canvas 绘制
+        switch (props.currentMap[y][x]) {
+          case props.TERRAIN.GRASS:
+            drawGrassTile(screenX, screenY, x, y)
+            break
+          case props.TERRAIN.ROAD:
+            drawRoadTile(screenX, screenY, x, y)
+            break
+          case props.TERRAIN.BUILDING:
+            drawBuildingTile(screenX, screenY)
+            break
+          default:
+            drawGrassTile(screenX, screenY, x, y)
+        }
       }
       
       ctx.strokeStyle = '#1a1a1a'
@@ -318,6 +357,8 @@ function drawBossSpots() {
 }
 
 function drawTaverns() {
+  const tavernImage = getAsset('tavern')
+  
   props.currentTaverns.forEach(tavern => {
     const screenX = tavern.x * TILE_SIZE - props.camera.x
     const screenY = tavern.y * TILE_SIZE - props.camera.y
@@ -327,49 +368,64 @@ function drawTaverns() {
       return
     }
     
-    const gradient = ctx.createLinearGradient(screenX, screenY, screenX, screenY + TILE_SIZE)
-    gradient.addColorStop(0, '#6B3E26')
-    gradient.addColorStop(1, '#4A2C18')
-    ctx.fillStyle = gradient
-    ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE)
-    
-    ctx.fillStyle = '#3a2010'
-    ctx.fillRect(screenX + 2, screenY + 2, TILE_SIZE - 4, TILE_SIZE * 0.35)
-    
-    ctx.fillStyle = '#8B4513'
-    ctx.fillRect(screenX + 4, screenY + TILE_SIZE * 0.38, TILE_SIZE - 8, TILE_SIZE * 0.58)
-    
-    const signGradient = ctx.createLinearGradient(
-      screenX + TILE_SIZE * 0.2, screenY + TILE_SIZE * 0.15,
-      screenX + TILE_SIZE * 0.8, screenY + TILE_SIZE * 0.25
-    )
-    signGradient.addColorStop(0, '#DAA520')
-    signGradient.addColorStop(1, '#B8860B')
-    ctx.fillStyle = signGradient
-    ctx.fillRect(screenX + TILE_SIZE * 0.2, screenY + TILE_SIZE * 0.15, TILE_SIZE * 0.6, TILE_SIZE * 0.12)
-    
-    ctx.fillStyle = '#8B0000'
-    ctx.font = 'bold 10px Arial'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('酒 馆', screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.22)
-    
-    ctx.fillStyle = '#CD853F'
-    ctx.font = 'bold 22px Arial'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('🍶', screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2 + 8)
-    
-    ctx.strokeStyle = '#FFD700'
-    ctx.lineWidth = 2
-    ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE)
+    if (tavernImage) {
+      // 使用素材图片
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(tavernImage, screenX, screenY, TILE_SIZE, TILE_SIZE)
+    } else {
+      // 回退到 Canvas 绘制
+      drawTavernFallback(screenX, screenY)
+    }
   })
+}
+
+// 酒馆绘制后备方案
+function drawTavernFallback(x, y) {
+  const gradient = ctx.createLinearGradient(x, y, x, y + TILE_SIZE)
+  gradient.addColorStop(0, '#6B3E26')
+  gradient.addColorStop(1, '#4A2C18')
+  ctx.fillStyle = gradient
+  ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE)
+  
+  ctx.fillStyle = '#3a2010'
+  ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE * 0.35)
+  
+  ctx.fillStyle = '#8B4513'
+  ctx.fillRect(x + 4, y + TILE_SIZE * 0.38, TILE_SIZE - 8, TILE_SIZE * 0.58)
+  
+  const signGradient = ctx.createLinearGradient(
+    x + TILE_SIZE * 0.2, y + TILE_SIZE * 0.15,
+    x + TILE_SIZE * 0.8, y + TILE_SIZE * 0.25
+  )
+  signGradient.addColorStop(0, '#DAA520')
+  signGradient.addColorStop(1, '#B8860B')
+  ctx.fillStyle = signGradient
+  ctx.fillRect(x + TILE_SIZE * 0.2, y + TILE_SIZE * 0.15, TILE_SIZE * 0.6, TILE_SIZE * 0.12)
+  
+  ctx.fillStyle = '#8B0000'
+  ctx.font = 'bold 10px Arial'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('酒 馆', x + TILE_SIZE / 2, y + TILE_SIZE * 0.22)
+  
+  ctx.fillStyle = '#CD853F'
+  ctx.font = 'bold 22px Arial'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('🍶', x + TILE_SIZE / 2, y + TILE_SIZE / 2 + 8)
+  
+  ctx.strokeStyle = '#FFD700'
+  ctx.lineWidth = 2
+  ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE)
 }
 
 // 绘制区域出口
 function drawExits() {
   const currentRegion = props.regions[props.currentRegionIndex]
   if (!currentRegion || !currentRegion.exits) return
+  
+  const exitGreenImage = getAsset('exit_green')
+  const exitRedImage = getAsset('exit_red')
   
   currentRegion.exits.forEach(exit => {
     const screenX = exit.x * TILE_SIZE - props.camera.x
@@ -383,37 +439,66 @@ function drawExits() {
     const targetRegion = props.regions[exit.targetRegion]
     const isConquered = targetRegion?.conquered
     
-    // 绘制出口标记
-    const gradient = ctx.createLinearGradient(screenX, screenY, screenX, screenY + TILE_SIZE)
-    if (isConquered) {
-      gradient.addColorStop(0, '#2E8B57')  // 绿色表示可通行
-      gradient.addColorStop(1, '#006400')
+    // 尝试使用素材图片
+    const exitImage = isConquered ? exitGreenImage : exitRedImage
+    
+    if (exitImage) {
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(exitImage, screenX, screenY, TILE_SIZE, TILE_SIZE)
     } else {
-      gradient.addColorStop(0, '#8B0000')  // 红色表示未占领
-      gradient.addColorStop(1, '#4a0000')
+      // 回退到 Canvas 绘制
+      drawExitFallback(screenX, screenY, isConquered)
     }
-    ctx.fillStyle = gradient
-    ctx.fillRect(screenX + 8, screenY + 8, TILE_SIZE - 16, TILE_SIZE - 16)
-    
-    // 绘制箭头
-    ctx.fillStyle = isConquered ? '#90EE90' : '#FF6666'
-    ctx.font = 'bold 24px Arial'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('➤', screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2)
-    
-    // 绘制边框
-    ctx.strokeStyle = isConquered ? '#00FF00' : '#FF0000'
-    ctx.lineWidth = 3
-    ctx.strokeRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8)
   })
+}
+
+// 出口绘制后备方案
+function drawExitFallback(x, y, isConquered) {
+  // 绘制出口标记
+  const gradient = ctx.createLinearGradient(x, y, x, y + TILE_SIZE)
+  if (isConquered) {
+    gradient.addColorStop(0, '#2E8B57')  // 绿色表示可通行
+    gradient.addColorStop(1, '#006400')
+  } else {
+    gradient.addColorStop(0, '#8B0000')  // 红色表示未占领
+    gradient.addColorStop(1, '#4a0000')
+  }
+  ctx.fillStyle = gradient
+  ctx.fillRect(x + 8, y + 8, TILE_SIZE - 16, TILE_SIZE - 16)
+  
+  // 绘制箭头
+  ctx.fillStyle = isConquered ? '#90EE90' : '#FF6666'
+  ctx.font = 'bold 24px Arial'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('➤', x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+  
+  // 绘制边框
+  ctx.strokeStyle = isConquered ? '#00FF00' : '#FF0000'
+  ctx.lineWidth = 3
+  ctx.strokeRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8)
 }
 
 function drawPlayer() {
   const screenX = props.player.x * TILE_SIZE - props.camera.x
   const screenY = props.player.y * TILE_SIZE - props.camera.y
-  const centerX = screenX + TILE_SIZE / 2
-  const centerY = screenY + TILE_SIZE / 2
+  
+  const playerImage = getAsset('player')
+  
+  if (playerImage) {
+    // 使用素材图片
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(playerImage, screenX, screenY, TILE_SIZE, TILE_SIZE)
+  } else {
+    // 回退到 Canvas 绘制
+    drawPlayerFallback(screenX, screenY)
+  }
+}
+
+// 主角绘制后备方案
+function drawPlayerFallback(x, y) {
+  const centerX = x + TILE_SIZE / 2
+  const centerY = y + TILE_SIZE / 2
   
   ctx.fillStyle = '#1a4d16'
   ctx.beginPath()
@@ -430,16 +515,16 @@ function drawPlayer() {
   
   ctx.fillStyle = '#CC0000'
   ctx.beginPath()
-  ctx.moveTo(centerX - 8, screenY + 8)
-  ctx.lineTo(centerX, screenY)
-  ctx.lineTo(centerX + 8, screenY + 8)
+  ctx.moveTo(centerX - 8, y + 8)
+  ctx.lineTo(centerX, y)
+  ctx.lineTo(centerX + 8, y + 8)
   ctx.fill()
   
   ctx.fillStyle = '#FF0000'
   ctx.beginPath()
-  ctx.moveTo(centerX - 6, screenY + 6)
-  ctx.lineTo(centerX, screenY + 2)
-  ctx.lineTo(centerX + 6, screenY + 6)
+  ctx.moveTo(centerX - 6, y + 6)
+  ctx.lineTo(centerX, y + 2)
+  ctx.lineTo(centerX + 6, y + 6)
   ctx.fill()
   
   ctx.fillStyle = '#FFD700'

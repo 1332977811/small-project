@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   stats: Object,
   player: Object,
   totalRegions: Number
@@ -66,8 +66,8 @@ defineProps({
 defineEmits(['save', 'load', 'openEquipment'])
 
 function getWeatherDisplay() {
-  if (!stats.weather) return '☀️ 晴天'
-  const weatherId = stats.weather.current
+  if (!props.stats?.weather) return '☀️ 晴天'
+  const weatherId = props.stats.weather.current
   const weathers = {
     sunny: '☀️ 晴天',
     rainy: '🌧️ 雨天',

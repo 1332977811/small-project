@@ -89,6 +89,8 @@ import EndingModal from './components/EndingModal.vue'
 import EquipmentModal from './components/EquipmentModal.vue'
 import RandomEventModal from './components/RandomEventModal.vue'
 import { useGame } from './composables/useGame'
+import { preloadAssets } from './composables/assetLoader'
+import { onMounted } from 'vue'
 
 const {
   currentMap,
@@ -139,6 +141,11 @@ const {
   CANVAS_HEIGHT,
   TERRAIN
 } = useGame()
+
+// 游戏启动时预加载素材
+onMounted(async () => {
+  await preloadAssets()
+})
 </script>
 
 <style>
